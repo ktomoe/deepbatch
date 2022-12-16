@@ -1,0 +1,60 @@
+data_dir: ./data/
+save_dir: ./saver/saver
+zarr_args_a: &zarr_args_a
+    chunk: 10
+    output_dir: ./db/deepbatch.zarr
+    mode: a
+zarr_args_w:
+    chunk: 10
+    output_dir: ./db/deepbatch.zarr
+    mode: w
+sg_args_a:
+    backend: hybrid
+    backend_args: *zarr_args_a
+    data_id: deepbatch
+range0: 0
+range1: 60
+range2: 600
+range3: 3600
+range4: 36000
+range5: 864000000
+input_files:
+    - SDSC-BLUE-2000-4.2-cln
+      #- HPC2N-2002-2.2-cln
+      #- ANL-Intrepid-2009-1
+      #- PIK-IPLEX-2009-1
+      #- RICC-2010-2
+      #- CEA-Curie-2011-2.1-cln
+task_args:
+    num_epochs: 100
+    num_workers: 4
+    device: 'cuda'
+    batch_size: 256
+    batch_sampler: True
+    optimizer: SGD
+    optimizer_args:
+        lr: 0.01
+        momentum: 0.9
+        weight_decay: 0.00005
+    metrics:
+        - loss
+        - lr
+    scheduler: CosineAnnealingLR
+    scheduler_args:
+        T_max: 100
+        eta_min: 0.0001
+    max_patience: 100
+    loss: CrossEntropyLoss
+    input_var_names: snapshots
+    output_var_names:
+        - preds
+        - attns
+    pred_var_names: preds
+    true_var_names: labels
+    torchinfo: True
+    verbose: 1
+agent_args:
+    dump_all_results: True
+    metric: ACCMetric
+    metric_args:
+        var_names: 'pred labels'
