@@ -63,7 +63,7 @@ class DeepBatchModel(nn.Module):
     def __init__(self, feature_layers=4, nodes=16, num_heads=2):
         super(DeepBatchModel, self).__init__()
       
-        self.features = DeepGraphConvModel(21, feature_layers, nodes, num_heads)
+        self.features = DeepGraphConvModel(22, feature_layers, nodes, num_heads)
         self.fc1 = nn.Linear(nodes*feature_layers, nodes)
         self.bn = nn.BatchNorm1d(nodes)
         self.relu = nn.ReLU()
@@ -91,7 +91,7 @@ class DeepBatchModel(nn.Module):
         return feat, attns
 
 class MLPModel(nn.Module):
-    def __init__(self, inputs=21*621, layers=4, nodes=16):
+    def __init__(self, inputs=22*41, layers=4, nodes=16):
         super(MLPModel, self).__init__()
 
         convs = [

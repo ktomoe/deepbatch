@@ -33,7 +33,7 @@ agent_args['num_trials'] = 1
 
 task_hps = dict(
     data_id = [
-        'deepbatch_flat_150_SDSC-BLUE-2000-4.2-cln',
+        'deepbatch_flat_10_SDSC-BLUE-2000-4.2-cln',
     ],
     model__layers = [8,], # [3, 4,5,6,7, 8],
     model__nodes = [256], #[32,64,128,256],

@@ -33,6 +33,7 @@ NUM_RUN_JOB = 1
 NUM_WAIT_PROC = 2
 NUM_RUN_PROC = 3
 USER_TIME = 4
+USER_WAIT_TIME = 5
 
 ##############################################################################
 def get_label(time):
@@ -113,7 +114,25 @@ def get_submit_hour(step, wsubmit_time, rsubmit_time, fsubmit_time):
 
     return np.array(rtn)
 
-#@profile
+def get_user_wait_time(ajobs, rjobs, fjobs):
+    rtn = np.zeros(len(ajobs))
+    ajobs_user_ids = ajobs[:,(USER_ID, QUEUE_ID)]
+    unique_ids = np.unique(ajobs_user_ids,axis=0)
+
+    for user_id, queue_id in unique_ids:
+        user_rjobs = rjobs[(rjobs[:, USER_ID] == user_id) & (rjobs[:, QUEUE_ID] == queue_id)]
+        user_fjobs = fjobs[(fjobs[:, USER_ID] == user_id) & (fjobs[:, QUEUE_ID] == queue_id)]
+
+        user_ajobs = np.concatenate([user_rjobs, user_fjobs])
+        user_ajobs = user_ajobs[np.argsort(user_ajobs[:, SUBMIT_TIME])]
+        user_ajobs = user_ajobs[:2]
+
+        if (len(user_ajobs) > 0):
+            ave_wait_time = np.average(user_ajobs[:, WAIT_TIME])
+            rtn[(ajobs_user_ids[:, 0] == user_id) & (ajobs_user_ids[:, 1] == queue_id)] = ave_wait_time
+
+    return rtn
+
 def make_snapshots(data):
     submit_time = data[:, SUBMIT_TIME]
     start_time = submit_time + data[:, WAIT_TIME]
@@ -137,6 +156,7 @@ def make_snapshots(data):
         step = idata[SUBMIT_TIME]
         queue_id = idata[QUEUE_ID]
         part_id = idata[PART_ID]
+        user_id = idata[USER_ID]
 
         rindex = np.logical_and(start_time < step, end_time >= step)
         windex = np.logical_and(submit_time < step, start_time >= step)
@@ -152,7 +172,7 @@ def make_snapshots(data):
         fend_time = fstart_time + fjobs[:, RUN_TIME]
 
         fjobs = fjobs[np.argsort(fend_time)]
-        fjobs = fjobs[-20:]
+        fsubmit_time = fsubmit_time[np.argsort(fend_time)]
 
         # mask information
         rsubmit_time = np.copy(rjobs[:, SUBMIT_TIME])
@@ -160,8 +180,6 @@ def make_snapshots(data):
 
         wsubmit_time = np.copy(wjobs[:, SUBMIT_TIME])
         wstart_time = wsubmit_time + wjobs[:, WAIT_TIME]
-
-        fsubmit_time = fsubmit_time[-20:]
 
         rjobs[:, SUBMIT_TIME] = step - rsubmit_time
         wjobs[:, SUBMIT_TIME] = step - wsubmit_time
@@ -183,15 +201,19 @@ def make_snapshots(data):
         wjobs[:, STATUS] = 2.
         fjobs[:, STATUS] = fjobs[:, STATUS] + 3.
 
+        fjobs_org = np.copy(fjobs)
+        fjobs = fjobs[-20:]
+
         ajobs = np.concatenate([tjobs, wjobs, rjobs, fjobs])
 
-        support_info = np.zeros((len(ajobs), 5))
+        support_info = np.zeros((len(ajobs), 6))
         queue_jobs = get_queue_jobs(ajobs, wjobs, rjobs)
         support_info[:, NUM_WAIT_JOB] = queue_jobs[:, NUM_WAIT_JOB]
         support_info[:, NUM_RUN_JOB] = queue_jobs[:, NUM_RUN_JOB]
         support_info[:, NUM_WAIT_PROC] = queue_jobs[:, NUM_WAIT_PROC]
         support_info[:, NUM_RUN_PROC] = queue_jobs[:, NUM_RUN_PROC]
-        support_info[:, USER_TIME] = get_user_time(ajobs, rjobs, fjobs)
+        support_info[:, USER_TIME] = get_user_time(ajobs, rjobs, fjobs_org)
+        support_info[:, USER_WAIT_TIME] = get_user_wait_time(ajobs, rjobs, fjobs_org)
         ajobs = np.concatenate([ajobs, support_info], axis=1)
         ajobs = np.sign(ajobs) * np.log10(np.abs(ajobs) + 1)
         snapshots.append(ajobs)

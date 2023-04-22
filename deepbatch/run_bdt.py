@@ -12,7 +12,7 @@ yml = yaml.load(open('config.yml'), Loader=yaml.FullLoader)
 sg_args = yml['sg_args_a']
 
 configs = {
-    'deepbatch_flat_150_SDSC-BLUE-2000-4.2-cln':  [(7, 1)], # 5, 6, 7, 8
+    'deepbatch_flat_10_SDSC-BLUE-2000-4.2-cln':  [(7, 1)], # 5, 6, 7, 8
     }
 
 ##############################################################################
@@ -70,4 +70,4 @@ if __name__ == "__main__":
         resutl = np.array(result)
         print ('-----')
         print (data_id)
-        print (np.average(result, axis=1), np.std(result, axis=1))
+        print (np.average(result, axis=1))
